@@ -11,7 +11,7 @@
 namespace Codegor\Acl\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Codegor\Upload\Upload;
+use Codegor\Upload\Store;
 
 class UploadServiceProvider extends ServiceProvider {
 	/**
@@ -26,7 +26,7 @@ class UploadServiceProvider extends ServiceProvider {
 	
 //	public function register() {
 //		$this->app->bind('codegor.file', function () {
-//			return new Upload();
+//			return new Store();
 //		});
 //	}
 }

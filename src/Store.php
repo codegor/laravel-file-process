@@ -6,11 +6,15 @@ use Auth;
 use ZipArchive;
 use Exception;
 
-class Upload {
+class Store {
 	public static $availableSpace = false;
+	public static $prefixLink = '/file/';
 	
 	public static function setAvailableSpace($bites) {
 		self::$availableSpace = $bites;
+	}
+	public static function setPrefixLink($path) {
+		self::$prefixLink = $path;
 	}
 	
 	public static function uploadFileRndName($ext, $data) {
@@ -28,7 +32,7 @@ class Upload {
 		$path = "files/$user_id";
 		$path = self::_checkCountFiles($path);
 		if (Storage::put("$path/$name", base64_decode($data)))
-			return File::getFileUrl("$path/$name");
+			return self::$prefixLink.File::getFileUrl("$path/$name");
 		else
 			return '';
 	}
@@ -65,7 +69,7 @@ class Upload {
 				$zip->addFile(storage_path('app/' . $obj->link), "$obj->name.$obj->type");
 		}
 		$zip->close();
-		return File::getFileUrl($path);
+		return self::$prefixLink.File::getFileUrl($path);
 	}
 	
 	private static function _checkExt($ext) {
