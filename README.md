@@ -6,7 +6,7 @@ A laravel plugin for receive base64 file, store and generate url. Then get the f
 1. Install File API
 
     ```php
-    composer require codegor/laravel-file-process
+    composer require 'codegor/laravel-file-process'
     ```
 
 1. publish config file

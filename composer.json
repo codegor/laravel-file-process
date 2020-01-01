@@ -1,6 +1,7 @@
 {
 	"name": "codegor/laravel-file-process",
 	"description": "Laravel file receive with base64 encode, store it and generate file url. Than you can get the file with the url",
+	"type": "library",
 	"keywords": [
 		"Upload",
 		"File",
@@ -35,9 +36,6 @@
 		}
 	},
 	"extra": {
-		"branch-alias": {
-			"dev-develop": "0.5-dev"
-		},
 		"laravel": {
 			"providers": [
 				"Codegor\\Upload\\Providers\\UploadServiceProvider"
