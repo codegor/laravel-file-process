@@ -1,7 +1,7 @@
 <?php
 namespace Codegor\Upload\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Codegor\Upload\File as Lib;
 
 class File extends Controller {
