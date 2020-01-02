@@ -59,7 +59,7 @@ trait JsonFillable {
     return $this;
   }
   
-  public function jsonFillFileJob(string $field, array $fills, array $props) {
+  public function jsonFillFileJob(string $field, array $fills, array $props): self {
     $res = $this->{$field} ? $this->{$field} : [];
     $hasFile = false;
     $delFile = false;
@@ -97,7 +97,7 @@ trait JsonFillable {
     return $this;
   }
   
-  private function _fileProcess(&$file, $cnf) {
+  private function _fileProcess(array &$file, array $cnf): bool {
     if(!(Arr::has($file, $cnf['from']) && Arr::has($file, $cnf['from'].'.data'))){
       if(Arr::has($file, $cnf['from']))
         Arr::forget($file, $cnf['from']);
@@ -112,7 +112,7 @@ trait JsonFillable {
     return true;
   }
   
-  private function _fileCollectionProcess(&$file, $cnf) {
+  private function _fileCollectionProcess(array &$file, array $cnf): bool {
     if(0 == count($file))
       return false;
     

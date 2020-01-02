@@ -10,20 +10,20 @@ class Store {
 	public static $availableSpace = false;
 	public static $prefixLink = '/file/';
 	
-	public static function setAvailableSpace($bites) {
+	public static function setAvailableSpace(int $bites):void {
 		self::$availableSpace = $bites;
 	}
-	public static function setPrefixLink($path) {
+	public static function setPrefixLink(string $path):void  {
 		self::$prefixLink = $path;
 	}
 	
-	public static function uploadFileRndName($ext, $data) {
+	public static function uploadFileRndName(string $ext, string $data): string {
 		$ext = strtolower($ext);
 		$name = md5(substr($data,0,32).time());
 		return self::uploadFile($name, $ext, $data);
 	}
 	
-	public static function uploadFile($name, $ext, $data) {
+	public static function uploadFile(string $name, string $ext, string $data): string {
 		if (!self::_checkExt($ext)) return '';
 		if (!self::_checkLimit($data)) return '';
 		
@@ -37,7 +37,7 @@ class Store {
 			return '';
 	}
 	
-	public static function createZip($list) {
+	public static function createZip(array $list):string {
 		if (!is_array($list)) throw new Exception('createZip: list params should be an array');
 		$user_id = Auth::user()->id;
 		$path = "files/zips/$user_id/";
@@ -72,23 +72,23 @@ class Store {
 		return self::$prefixLink.File::getFileUrl($path);
 	}
 	
-	public static function checkUrl($url) {
+	public static function checkUrl(string $url): bool {
 		$url = substr($url, strlen(self::$prefixLink));
-		return File::getFilePath($url);
+		return !!File::getFilePath($url);
 	}
 	
-	private static function _checkExt($ext) {
+	private static function _checkExt(string $ext): bool {
 		return in_array($ext, explode(',', config('upload.extantion')));
 	}
 	
-	private static function _checkLimit($data) {
+	private static function _checkLimit(string $data): bool {
 		if(self::$availableSpace)
 			return strlen(base64_decode($data)) <= self::$availableSpace;
 		else
 			return true;
 	}
 	
-	private static function _checkCountFiles($path, $count = 0) {
+	private static function _checkCountFiles(string $path, int $count = 0): string {
 		if (5000 <= count(Storage::files($path . (0 != $count ? '/' . $count : '')))) {
 			$count++;
 			return self::_checkCountFiles($path, $count);

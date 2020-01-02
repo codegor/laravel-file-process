@@ -7,18 +7,18 @@ class File {
   private static $_share_pref = 'share://';
   private static $_share_pref_pattern = 'share\:\/\/';
   
-  private static function _getFileMatchPattern() {
+  private static function _getFileMatchPattern(): string {
     $user_id =  (Auth::check()) ? Auth::user()->id : -1;
     return '/^files\/' . $user_id . '\/.{32,37}\..{3,4}$/';
   }
-  private static function _getZipFileMatchPattern() {
+  private static function _getZipFileMatchPattern(): string {
     $user_id =  (Auth::check()) ? Auth::user()->id : -1;
     return '/^files\/zips\/' . $user_id . '\/.{32,37}\.zip$/';
   }
-  private static function _getSharedFileMatchPattern() {
+  private static function _getSharedFileMatchPattern(): string {
     return '/^'.self::$_share_pref_pattern.'files\/\d{1,12}\/.{32,37}\..{3,4}$/';
   }
-  private static function _encrypt($d) {
+  private static function _encrypt(string $d): string {
     $compress = function($input, $ascii_offset = 38){
       $input = strtoupper($input);
       $output = '';
@@ -48,7 +48,7 @@ class File {
 	  throw_if(empty(config('upload.secret')) || empty(config('upload.vi')), \Exaption::class, 'Please run php artisan vendor:publish --provider="Codegor\Upload\Providers\UploadServiceProvider" --tag=config');
     return base64_encode(openssl_encrypt($compress($d), 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi'))));
   }
-  private static function _decrypt($h) {
+  private static function _decrypt(string $h): string {
     $decompress = function($input, $ascii_offset = 38) {
     
                   $output = '';
@@ -75,7 +75,7 @@ class File {
     return $decompress(openssl_decrypt(base64_decode($h), 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi'))));
   }
   
-  public static function checkFileUrl($url) {
+  public static function checkFileUrl(string $url): bool {
     try {
       $path = self::_decrypt($url);
     } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
@@ -84,7 +84,7 @@ class File {
     return preg_match(self::_getFileMatchPattern(), $path) > 0;
   }
   
-  public static function getFilePath($url) {
+  public static function getFilePath(string $url):?string { //:string|bool
     try {
       $path = self::_decrypt($url);
     } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
@@ -99,18 +99,18 @@ class File {
       $res = preg_match(self::_getSharedFileMatchPattern(), $path) > 0;
       $path = ($res) ? substr($path, 8) : $path;
     }
-    return ($res) ? $path : $res;
+    return ($res) ? $path : null;
   }
   
-  public static function getFileUrl($path) {
+  public static function getFileUrl(string $path): string {
     return self::_encrypt($path);
   }
 	
-	public static function getSharedFileUrl($path) {
+	public static function getSharedFileUrl(string $path): string {
 		return self::_encrypt(self::$_share_pref.$path);
 	}
   
-  public static function shareFile($url) {
+  public static function shareFile(string $url): string {
     try {
       $path = self::_decrypt($url);
     } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
