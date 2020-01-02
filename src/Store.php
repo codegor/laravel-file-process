@@ -72,6 +72,11 @@ class Store {
 		return self::$prefixLink.File::getFileUrl($path);
 	}
 	
+	public static function checkUrl($url) {
+		$url = substr($url, strlen(self::$prefixLink));
+		return File::getFilePath($url);
+	}
+	
 	private static function _checkExt($ext) {
 		return in_array($ext, explode(',', config('upload.extantion')));
 	}
