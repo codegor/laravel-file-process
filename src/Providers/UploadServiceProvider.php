@@ -22,7 +22,7 @@ class UploadServiceProvider extends ServiceProvider {
 				return false;
 		});
 		
-		Validator::extend('index', function ($attribute, $value, $parameters, $validator) {
+		Validator::extend('indexed', function ($attribute, $value, $parameters, $validator) {
 			/*
 			$is_assoc = function ($array) {
 				$keys = array_keys($array);
