@@ -60,72 +60,78 @@ trait JsonFillable {
   }
   
   public function jsonFillFileJob(string $field, array $fills, array $props): self {
-    $res = $this->{$field} ? $this->{$field} : [];
-    $hasFile = false;
-    $delFile = false;
-    foreach ($fills as $f => $cnf) { // if src omit or empty and file empty del from DB info
-      if(!isset($props[$f]))
-        continue; // props does not present
-      
-      $file = $props[$f];
-      
-      if(isset($cnf['type']) && 'collection' == $cnf['type']){
-        if(!$this->_fileCollectionProcess($file, $cnf)){ // if collection empty
-          if(isset($res[$f]))
-            $delFile = true;
-          else
-            continue; // props present but empty and nothing to delete
-        }
-      } else if(!$this->_fileProcess($file, $cnf)){ // if file doesn't present
-        if(Arr::has($file, $cnf['to']) && '' == Arr::get($file, $cnf['to']) && isset($res[$f]))
-          $delFile = true;
-        else
-          continue; // props present but nothing store or delete
-      }
-      
-      $hasFile = true;
-      
-      if($delFile)
-        unset($res[$f]);
-      else
-        $res[$f] = $file;
-    }
-    
-    if($hasFile)
-      $this->{$field} = $res;
-    
-    return $this;
+	  $res = $this->{$field} ? $this->{$field} : [];
+	  $hasFile = false;
+	  foreach ($fills as $f => $cnf) { // if src omit or empty and file empty del from DB info
+		  if(!isset($props[$f]))
+			  continue; // props does not present
+		
+		  $file = $props[$f];
+		
+		  $delFile = false;
+		  if(isset($cnf['type']) && 'collection' == $cnf['type']){
+			  if(!$this->_fileCollectionProcess($file, $cnf)){ // if collection empty
+				  if(isset($res[$f]))
+					  $delFile = true;
+				  else
+					  continue; // props present but empty and nothing to delete
+			  }
+		  } else if(!$this->_fileProcess($file, $cnf)){ // if file doesn't present
+			  if(Arr::has($file, $cnf['to']) && ('' == Arr::get($file, $cnf['to']) || !$this->_checkSrc($file, $cnf)) && isset($res[$f]))
+				  $delFile = true;
+			  else
+				  continue; // props present but nothing store or delete
+		  }
+		
+		  $hasFile = true;
+		
+		  if($delFile)
+			  unset($res[$f]);
+		  else
+			  $res[$f] = $file;
+	  }
+	
+	  if($hasFile)
+		  $this->{$field} = $res;
+	
+	  return $this;
   }
   
   private function _fileProcess(array &$file, array $cnf): bool {
-    if(!(Arr::has($file, $cnf['from']) && Arr::has($file, $cnf['from'].'.data'))){
-      if(Arr::has($file, $cnf['from']))
-        Arr::forget($file, $cnf['from']);
-    
-      return false;
-    }
-  
-    $url = Store::uploadFileRndName(Arr::get($file, $cnf['from'].'.type'), Arr::get($file, $cnf['from'].'.data'));
-    Arr::set($file, $cnf['to'], $url);
-    Arr::forget($file, $cnf['from']);
-  
-    return true;
+	  if(!(Arr::has($file, $cnf['from']) && Arr::has($file, $cnf['from'].'.data'))){
+		  if(Arr::has($file, $cnf['from']))
+			  Arr::forget($file, $cnf['from']);
+		
+		  return false;
+	  }
+	
+	  $url = Store::uploadFileRndName(Arr::get($file, $cnf['from'].'.type'), Arr::get($file, $cnf['from'].'.data'));
+	  Arr::set($file, $cnf['to'], $url);
+	  Arr::forget($file, $cnf['from']);
+	
+	  return true;
   }
   
   private function _fileCollectionProcess(array &$file, array $cnf): bool {
-    if(0 == count($file))
-      return false;
-    
-    foreach ($file as &$item) {
-      if (!$this->_fileProcess($item, $cnf) && Arr::has($item, $cnf['to'])){  // if file doesn't present and src not our dell src
-        $src = Arr::get($item, $cnf['to']);
-        if('' != $src && false === Store::checkUrl($src)) {
-          Arr::set($item, $cnf['to'], '');
-        }
-      }
-    }
-    unset($item);
-    
-    return true;
+	  if(0 == count($file))
+		  return false;
+	
+	  foreach ($file as $k => &$item) {
+		  if (!$this->_fileProcess($item, $cnf)){  // if file doesn't present and src not our dell src
+			  if(Arr::has($item, $cnf['to']) && ('' == Arr::get($item, $cnf['to']) || !$this->_checkSrc($item, $cnf)))
+				  unset($file[$k]);
+		  }
+	  }
+	  unset($item);
+	
+	  if(0 == count($file))
+		  return false;
+	
+	  return true;
   }
+	
+	private function _checkSrc(array &$file, array $cnf): bool {
+		$src = Arr::get($file, $cnf['to']);
+		return !('' != $src && false === Store::checkUrl($src));
+	}
 }
