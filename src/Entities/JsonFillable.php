@@ -48,16 +48,22 @@ trait JsonFillable {
     
     return parent::__call($method, $parameters);
   }
-  
-  public function jsonFillJob(string $field, array $fills, array $data): self {
-    $res = $this->{$field} ? $this->{$field} : [];
-    foreach ($fills as $key => $val)
-      if(isset($data[$key]) && is_callable('is_'.$val) && call_user_func('is_'.$val, $data[$key]))
-        $res[$key] = $data[$key];
-  
-    $this->{$field} = $res;
-    return $this;
-  }
+	
+	public function jsonFillJob(string $field, array $fills, array $data): self {
+		$res = $this->{$field} ? $this->{$field} : [];
+		foreach ($fills as $key => $val) {
+			if (isset($data[$key]) && is_callable('is_' . $val) && call_user_func('is_' . $val, $data[$key])) {
+				$old = $res[$key];
+				$res[$key] = $data[$key];
+				if(property_exists($this, $field.'Logged') && is_array($this->{$field.'Logged'})
+					&& isset($this->{$field.'Logged'}[$key]) && method_exists($this, $this->{$field.'Logged'}[$key]))
+					$this->{$this->{$field.'Logged'}[$key]}($data[$key], $old);
+			}
+		}
+		
+		$this->{$field} = $res;
+		return $this;
+	}
   
   public function jsonFillFileJob(string $field, array $fills, array $props): self {
 	  $res = $this->{$field} ? $this->{$field} : [];
@@ -130,7 +136,7 @@ trait JsonFillable {
 	  return true;
   }
 	
-	private function _checkSrc(array &$file, array $cnf): bool {
+	private function _checkSrc(array &$file, array $cnf): bool   {
 		$src = Arr::get($file, $cnf['to']);
 		return !('' != $src && false === Store::checkUrl($src));
 	}
