@@ -53,7 +53,7 @@ trait JsonFillable {
 		$res = $this->{$field} ? $this->{$field} : [];
 		foreach ($fills as $key => $val) {
 			if (isset($data[$key]) && is_callable('is_' . $val) && call_user_func('is_' . $val, $data[$key])) {
-				$old = $res[$key];
+				$old = $res[$key] ?? null;
 				$res[$key] = $data[$key];
 				if(property_exists($this, $field.'Logged') && is_array($this->{$field.'Logged'})
 					&& isset($this->{$field.'Logged'}[$key]) && method_exists($this, $this->{$field.'Logged'}[$key]))
