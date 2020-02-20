@@ -17,13 +17,13 @@ class Store {
 		self::$prefixLink = $path;
 	}
 	
-	public static function uploadFileRndName(string $ext, string $data): string {
+	public static function uploadFileRndName(string $ext, string $data, bool $accessPrivate = false): string {
 		$ext = strtolower($ext);
 		$name = md5(substr($data,0,32).time());
-		return self::uploadFile($name, $ext, $data);
+		return self::uploadFile($name, $ext, $data, $accessPrivate);
 	}
 	
-	public static function uploadFile(string $name, string $ext, string $data): string {
+	public static function uploadFile(string $name, string $ext, string $data, bool $accessPrivate = false): string {
 		if (!self::_checkExt($ext)) return '';
 		if (!self::_checkLimit($data)) return '';
 		
@@ -32,7 +32,7 @@ class Store {
 		$path = "files/$user_id";
 		$path = self::_checkCountFiles($path);
 		if (Storage::put("$path/$name", base64_decode($data)))
-			return self::$prefixLink.File::getFileUrl("$path/$name");
+			return self::$prefixLink.( $accessPrivate ? File::getFileUrl("$path/$name") : File::getSharedFileUrl("$path/$name"));
 		else
 			return '';
 	}

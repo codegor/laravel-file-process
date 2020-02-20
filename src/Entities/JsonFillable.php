@@ -14,12 +14,14 @@ trait JsonFillable {
 //	protected $nameFileFillable = [ // method nameFileFill()
 //		'key' => [
 //			'from' => 'path.path',
-//			'to' => 'path'
+//			'to' => 'path',
+//      //'access' => 'public' // || 'private', def - public or without this field = public
 //		],
 //		'key2' => [
 //			'type' => 'collection',
 //			'from' => 'path.inside.item',
 //			'to' => 'path.in.item'
+//      'access' => 'private' // || 'private', def - public
 //		]
 //	];
   
@@ -111,7 +113,8 @@ trait JsonFillable {
 		  return false;
 	  }
 	
-	  $url = Store::uploadFileRndName(Arr::get($file, $cnf['from'].'.type'), Arr::get($file, $cnf['from'].'.data'));
+	  $url = Store::uploadFileRndName(Arr::get($file, $cnf['from'].'.type'), Arr::get($file, $cnf['from'].'.data'),
+		  isset($cnf['access']) && 'private' == $cnf['access']);
 	  Arr::set($file, $cnf['to'], $url);
 	  Arr::forget($file, $cnf['from']);
 	
