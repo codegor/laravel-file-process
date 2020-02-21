@@ -88,7 +88,7 @@ class File {
     try {
       $path = self::_decrypt($url);
     } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-      return false;
+      return null;
     }
     $res = preg_match(self::_getFileMatchPattern(), $path) > 0;
     
