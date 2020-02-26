@@ -11,6 +11,15 @@ trait JsonFillable {
 //  protected $nameFillable = [ // method nameFill()
 //    "key" => "string", // string, array, int,
 //  ];
+//	protected array $nameToggleable = [
+//		'key' => 'array'  // toggle__KEY__: value
+//	];
+//	protected array $nameAddable = [
+//		'key' => 'array' // add__KEY__: value
+//	];
+//	protected array $nameDeletable = [
+//		'key' => 'array' // delete__KEY__: value
+//	];
 //	protected $nameFileFillable = [ // method nameFileFill()
 //		'key' => [
 //			'from' => 'path.path',
@@ -40,9 +49,16 @@ trait JsonFillable {
     if(strpos($method, 'Fill')){
       $param = explode('Fill', $method)[0];
       if(property_exists($this, $param.'Fillable'))
-        return $this->jsonFillJob($param, $this->{$param.'Fillable'}, $parameters[0]);
-      
-      else
+	      $this->jsonFillJob($param, $this->{$param . 'Fillable'}, $parameters[0]);
+      if(property_exists($this, $param.'Toggleable'))
+	      $this->jsonToggleJob($param, $this->{$param . 'Toggleable'}, $parameters[0]);
+      if(property_exists($this, $param.'Addable'))
+	      $this->jsonAddJob($param, $this->{$param . 'Addable'}, $parameters[0]);
+      if(property_exists($this, $param.'Deletable'))
+	      $this->jsonDelJob($param, $this->{$param . 'Deletable'}, $parameters[0]);
+				
+      if(!(property_exists($this, $param.'Fillable') || property_exists($this, $param.'Toggleable')
+	      || property_exists($this, $param.'Addable')|| property_exists($this, $param.'Deletable')))
         trigger_error("Entity ".self::class." doesn't have ".$param."Fillable param but jsonFill method called...", E_WARNING);
       
       return $this;
@@ -51,20 +67,83 @@ trait JsonFillable {
     return parent::__call($method, $parameters);
   }
 	
-	public function jsonFillJob(string $field, array $fills, array $data): self {
+	private function _each(string $field, array $fills, array $data, callable $action, bool $checkType = true) {
 		$res = $this->{$field} ? $this->{$field} : [];
 		foreach ($fills as $key => $val) {
-			if (isset($data[$key]) && is_callable('is_' . $val) && call_user_func('is_' . $val, $data[$key])) {
+			if (isset($data[$key]) && (!$checkType || ($checkType && is_callable('is_' . $val) && call_user_func('is_' . $val, $data[$key])))) {
 				$old = $res[$key] ?? null;
-				$res[$key] = $data[$key];
-				if(property_exists($this, $field.'Logged') && is_array($this->{$field.'Logged'})
-					&& isset($this->{$field.'Logged'}[$key]) && method_exists($this, $this->{$field.'Logged'}[$key]))
-					$this->{$this->{$field.'Logged'}[$key]}($data[$key], $old);
+				$res[$key] = $action($data[$key], $key, $res, $val);
+				if (property_exists($this, $field . 'Logged') && is_array($this->{$field . 'Logged'})
+					&& isset($this->{$field . 'Logged'}[$key]) && method_exists($this, $this->{$field . 'Logged'}[$key]))
+					$this->{$this->{$field . 'Logged'}[$key]}($data[$key], $old);
 			}
 		}
 		
 		$this->{$field} = $res;
 		return $this;
+  }
+	
+	public function jsonFillJob(string $field, array $fills, array $data): self {
+		return $this->_each($field, $fills, $data, function($val, $key, &$res, $type){
+			return $val;
+		});
+	}
+	
+	public function jsonToggleJob(string $field, array $fills, array $data): self {
+		return $this->_each($field, $fills, $data, function($val, $key, &$res, $type){
+			if('array' == $type){
+				$r = $res[$key] ?? [];
+				if(!in_array($val, $r))
+					$r[] = $val;
+				else {
+					array_splice($r, array_search($val, $r), 1);
+				}
+			} else if('string' == $type){
+				$r = $res[$key] ?? null;
+				$r = ($val == $r) ? null : $val;
+			} else if('numeric' == $type){
+				$r = $res[$key] ?? null;
+				$r = ($val == $r) ? null : $val;
+			} else //if('bool' == $type)
+				$r = isset($res[$key]) ? !$res[$key] : true;
+			
+			return $r;
+		}, false);
+	}
+	
+	public function jsonAddJob(string $field, array $fills, array $data): self {
+		return $this->_each($field, $fills, $data, function($val, $key, &$res, $type){
+			if('array' == $type){
+				$r = $res[$key] ?? [];
+				if(!in_array($val, $r))
+					$r[] = $val;
+			} else if('string' == $type){
+				$r = $res[$key] ?? '';
+				$r .= (string) $val;
+			} else if('numeric' == $type){
+				$r = $res[$key] ?? 0;
+				$r += (double) $val;
+			} else //if('bool' == $type)
+				$r = true;
+			
+			return $r;
+		}, false);
+	}
+	
+	public function jsonDelJob(string $field, array $fills, array $data): self {
+		return $this->_each($field, $fills, $data, function($val, $key, &$res, $type) use ($field){
+			if('array' == $type){
+				$r = $res[$key] ?? [];
+				if(in_array($val, $r))
+					array_splice($r, array_search($val, $r), 1);
+			} else if('string' == $type){
+				$r = $res[$key] ?? '';
+				$r = str_replace($val, '', $r);
+			} else //if('bool' == $type) if('numeric' == $type)
+				$r = null;
+			
+			return $r;
+		}, false);
 	}
   
   public function jsonFillFileJob(string $field, array $fills, array $props): self {
