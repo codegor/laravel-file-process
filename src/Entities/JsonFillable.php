@@ -67,15 +67,16 @@ trait JsonFillable {
     return parent::__call($method, $parameters);
   }
 	
-	private function _each(string $field, array $fills, array $data, callable $action, bool $checkType = true) {
+	private function _each(string $field, array $fills, array $data, callable $action, string $pref = '', bool $checkType = true) {
 		$res = $this->{$field} ? $this->{$field} : [];
 		foreach ($fills as $key => $val) {
-			if (isset($data[$key]) && (!$checkType || ($checkType && is_callable('is_' . $val) && call_user_func('is_' . $val, $data[$key])))) {
+			$i_key = $pref.$key;
+			if (isset($data[$i_key]) && (!$checkType || ($checkType && is_callable('is_' . $val) && call_user_func('is_' . $val, $data[$i_key])))) {
 				$old = $res[$key] ?? null;
-				$res[$key] = $action($data[$key], $key, $res, $val);
+				$res[$key] = $action($data[$i_key], $key, $res, $val);
 				if (property_exists($this, $field . 'Logged') && is_array($this->{$field . 'Logged'})
 					&& isset($this->{$field . 'Logged'}[$key]) && method_exists($this, $this->{$field . 'Logged'}[$key]))
-					$this->{$this->{$field . 'Logged'}[$key]}($data[$key], $old);
+					$this->{$this->{$field . 'Logged'}[$key]}($data[$i_key], $old);
 			}
 		}
 		
@@ -108,7 +109,7 @@ trait JsonFillable {
 				$r = isset($res[$key]) ? !$res[$key] : true;
 			
 			return $r;
-		}, false);
+		}, 'toggle',false);
 	}
 	
 	public function jsonAddJob(string $field, array $fills, array $data): self {
@@ -127,7 +128,7 @@ trait JsonFillable {
 				$r = true;
 			
 			return $r;
-		}, false);
+		}, 'add',false);
 	}
 	
 	public function jsonDelJob(string $field, array $fills, array $data): self {
@@ -143,7 +144,7 @@ trait JsonFillable {
 				$r = null;
 			
 			return $r;
-		}, false);
+		}, 'delete',false);
 	}
   
   public function jsonFillFileJob(string $field, array $fills, array $props): self {
