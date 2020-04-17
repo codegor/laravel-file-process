@@ -22,7 +22,8 @@
 	],
 	"require": {
 		"php": ">=7.1",
-		"laravel/framework": "*"
+		"laravel/framework": "*",
+		"ext-openssl": "*"
 	},
 	"require-dev": {
 	},
