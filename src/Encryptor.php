@@ -65,4 +65,12 @@ class Encryptor {
 		throw_if(empty(config('upload.secret')) || empty(config('upload.vi')), \Exaption::class, 'Please run php artisan vendor:publish --provider="Codegor\Upload\Providers\UploadServiceProvider" --tag=config');
 		return $decompress(openssl_decrypt(base64_decode($h), 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi'))));
 	}
+	public static function check(string $h): bool {
+		try {
+			self::decrypt($h);
+		} catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+			return false;
+		}
+		return true;
+	}
 }
