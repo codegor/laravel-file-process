@@ -68,6 +68,7 @@ trait JsonFillable {
   }
 	
 	private function _each(string $field, array $fills, array $data, callable $action, string $pref = '', bool $checkType = true) {
+		$logged = [];
 		$res = $this->{$field} ? $this->{$field} : [];
 		foreach ($fills as $key => $val) {
 			$i_key = $pref.$key;
@@ -76,13 +77,17 @@ trait JsonFillable {
 				$res[$key] = $action($data[$i_key], $key, $res, $val);
 				if (property_exists($this, $field . 'Logged') && is_array($this->{$field . 'Logged'})
 					&& isset($this->{$field . 'Logged'}[$key]) && method_exists($this, $this->{$field . 'Logged'}[$key]))
-					$this->{$this->{$field . 'Logged'}[$key]}($data[$i_key], $old);
+					$logged[$this->{$field . 'Logged'}[$key]] = ['new' => $data[$i_key], 'old' => $old]; //$this->{$this->{$field . 'Logged'}[$key]}($data[$i_key], $old);
 			}
 		}
 		
 		$this->{$field} = $res;
+		
+		foreach ($logged as $action => $params)
+			$this->{$action}($params['new'], $params['old']);
+		
 		return $this;
-  }
+	}
 	
 	public function jsonFillJob(string $field, array $fills, array $data): self {
 		return $this->_each($field, $fills, $data, function($val, $key, &$res, $type){
