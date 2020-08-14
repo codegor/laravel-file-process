@@ -9,7 +9,7 @@ namespace Codegor\Upload;
  * @package Codegor\Upload
  */
 class Encryptor {
-	public static function encrypt(string $d): string {
+	public static function encrypt(string $d, bool $zip = true): string {
 		$compress = function($input, $ascii_offset = 38){
 			$input = strtoupper($input);
 			$output = '';
@@ -37,9 +37,9 @@ class Encryptor {
 			return $output;
 		};
 		throw_if(empty(config('upload.secret')) || empty(config('upload.vi')), \Exaption::class, 'Please run php artisan vendor:publish --provider="Codegor\Upload\Providers\UploadServiceProvider" --tag=config');
-		return base64_encode(openssl_encrypt($compress($d), 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi'))));
+		return base64_encode(openssl_encrypt($zip ? $compress($d) : $d, 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi'))));
 	}
-	public static function decrypt(string $h): string {
+	public static function decrypt(string $h, bool $zip = true): string {
 		$decompress = function($input, $ascii_offset = 38) {
 			
 			$output = '';
@@ -63,7 +63,8 @@ class Encryptor {
 			return strtolower(rtrim($output, '='));
 		};
 		throw_if(empty(config('upload.secret')) || empty(config('upload.vi')), \Exaption::class, 'Please run php artisan vendor:publish --provider="Codegor\Upload\Providers\UploadServiceProvider" --tag=config');
-		return $decompress(openssl_decrypt(base64_decode($h), 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi'))));
+		$r = openssl_decrypt(base64_decode($h), 'AES-256-CBC', base64_decode(config('upload.secret')), false, base64_decode(config('upload.vi')));
+		return $zip ? $decompress($r) : $r;
 	}
 	public static function check(string $h): bool {
 		try {
