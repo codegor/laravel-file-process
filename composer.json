@@ -23,7 +23,8 @@
 	"require": {
 		"php": ">=7.1",
 		"laravel/framework": "*",
-		"ext-openssl": "*"
+		"ext-openssl": "*",
+		"ext-zlib": "*"
 	},
 	"require-dev": {
 	},
